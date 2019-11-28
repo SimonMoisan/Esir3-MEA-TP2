@@ -148,7 +148,7 @@ int main (int argc, char *argv[]){
         size_counter = size_counter + optimalSize_sort;
     
         for(int i = 0; i < (sizeof(BUFFER_sort)/sizeof(*BUFFER_sort[0])) ; i++){
-
+            
             k = kh_put(str, h, BUFFER_sort[i], &absent);
             if (absent){
                 kh_key(h, k) = strdup(BUFFER_sort[i]);
