@@ -11,8 +11,10 @@
 #include <sys/statfs.h>
 #include "klib/khash.h"
 
+// Initializing the hashmap from klib
 KHASH_SET_INIT_STR(str);
 
+// We use this mask to recognize nucleotides, the simplest way possible
 int masqueT = 0x10;
 int masqueG = 0x04;
 int masqueC = 0x02;
@@ -25,6 +27,7 @@ double getTime(void)
   return (1.0e-6*t.tv_usec + t.tv_sec);
 }
 
+// How we use the masks
 // A = 65 = 0100 0001
 // T = 84 = 0101 0100
 // C = 67 = 0100 0011
@@ -33,9 +36,11 @@ double getTime(void)
 // T        0001 0000
 // G        0000 0100
 // C        0000 0010
-// A         LE RESTE
+// A        Anything else
 
-
+// This function convert/compress the nucleotides strings into another string, 4 times shorter
+// A, T, C, G only 4 possibilities. So we can encode 1 nucleotide on only 2 bits.
+// A char is 8 bits. So we use 1 char of the new string to encode 4 nucleotides
 void Convertissor(const char * initial, unsigned char * result){
 
     int initSize = 100;
@@ -54,48 +59,10 @@ void Convertissor(const char * initial, unsigned char * result){
             result[(i / 4)] = newChar;
             newChar = 0;
         }
-
         newChar <<= 2;
     }
-
     result[25] = '\0';
 }
-
-// For an unsigned 
-// 000 = 00 00 00 00
-// 064 = 01 00 00 00
-// 128 = 10 00 00 00 
-// 192 = 11 00 00 00 
-
-void Deconvertissor(const char *converti, char *result){
-
-    int convertiSize = (sizeof(converti))/sizeof(converti[0]);
-
-    char cursorChar = 0;
-
-    for(int i = 0; i < convertiSize; i++){
-        cursorChar = converti[i];
-        for(int j = 0; j < 4; j++){
-            if(cursorChar & 0xC0){
-                result[i*4 + j] = 'T';
-                cursorChar <<= 1;
-            }else if(cursorChar & 0x80){
-                result[i*4 + j] = 'G';
-                cursorChar <<= 1;
-            }else if(cursorChar & 0x40){
-                result[i*4 + j] = 'C';
-                cursorChar <<= 1;
-            }else{
-                result[i*4 + j] = 'A';
-                cursorChar <<= 1;
-            }
-        }
-    }
-
-    result[convertiSize * 4] = '\n';
-}
-
-
 
 //Main function
 int main (int argc, char *argv[]){
@@ -109,28 +76,31 @@ int main (int argc, char *argv[]){
     int absent;
     int is_missing;
     char *line = NULL;
-    unsigned char *lineConvert = malloc(26 * sizeof(unsigned char));
+    unsigned char lineConvert[26]; // Useless if we don't use the convertissor function
     size_t len = 0;
     ssize_t read;
 
 
-    //Creating the hashmap and putting the line into it ################################################################
+    // Creating the hashmap and putting the line into it ################################################################
     printf("Putting sort_reads.txt into the hashmap ...\n");
     fp_sort = fopen("sort_reads.txt", "r");
     t1 = getTime();
     //We create the hashmap
-    char s[26];
+    
+    char s[100];
     khash_t(str) *h = kh_init(str);
     khint_t k;
 
-   
+    // We read the entry file line after line. We put each line into the new hashmap
     while((read = getline(&line, &len, fp_sort)) != -1){
 
-        Convertissor(line, lineConvert);
-        printf("\n##############VALUE: %s", lineConvert);   
-        k = kh_put(str, h, lineConvert, &absent);
+        //Here is the convertissor function, to optimize the size of each entry into the hashmap, desactivated here
+        //Convertissor(line, lineConvert);
+
+        // We put lineConvert in the place of line here, if we used the convertissor
+        k = kh_put(str, h, line, &absent);
         if (absent){
-            kh_key(h, k) = strdup(lineConvert);
+            kh_key(h, k) = strdup(line);
         }
 
     }
@@ -145,26 +115,29 @@ int main (int argc, char *argv[]){
     //Reading test, testing if present and writing results
     printf("Reading test, testing if present and writing results\n");
     t1 = getTime();
+    // We open at the same time the test file and the result file. We does't use buffer to respect the primary constraint of this work
     fp_test = fopen("test_reads.txt", "r");
     fw = fopen("exist_reads.txt","w");
 
     while((read = getline(&line, &len, fp_test)) != -1){
 
-        Convertissor(line,lineConvert);
-        k = kh_get(str, h, lineConvert); 
+        // We convert the line to make it comparable to the others line converted in the hashmap,  desactivated here
+        //Convertissor(line,lineConvert);
+
+        // We put lineConvert in the place of line here, if we used the convertissor
+        k = kh_get(str, h, line);
         is_missing = (k == kh_end(h));
         if (!is_missing){
             fprintf (fw, "%s", line);
-        } 
+        }
         
     }
     t2 = getTime();
     printf(" - time: %1.2lf sec\n",t2-t1);
     fclose(fp_test);
     fclose(fw);
-    free(lineConvert);
 
-    //We free the heap used for the map
+    //We free the heap memory space used for the map
     for (k = 0; k < kh_end(h); ++k)
         if (kh_exist(h, k))
             free((char*)kh_key(h, k));
