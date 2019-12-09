@@ -85,7 +85,3 @@ ff = open("spy_reads.txt","w")
 for i in range(len(LE)):
     ff.write(LE[i]+"\n")
 ff.close()
-
-
-
-    
