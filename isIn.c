@@ -76,10 +76,9 @@ int main (int argc, char *argv[]){
     int absent;
     int is_missing;
     char *line = NULL;
-    unsigned char lineConvert[26]; // Useless if we don't use the convertissor function
+    //unsigned char lineConvert[26]; Useless if we don't use the convertissor function
     size_t len = 0;
     ssize_t read;
-
 
     // Creating the hashmap and putting the line into it ################################################################
     printf("Putting sort_reads.txt into the hashmap ...\n");
@@ -102,13 +101,12 @@ int main (int argc, char *argv[]){
         if (absent){
             kh_key(h, k) = strdup(line);
         }
-
     }
 
     fclose(fp_sort);
     printf("    - hashmap size (number of different elements) is %d\n",kh_size(h));
     t2 = getTime();
-    printf(" - time: %1.2lf sec\n",t2-t1);
+    printf(" - time: %1.4lf sec\n",t2-t1);
 
 
     //#####################################################################################################
@@ -133,7 +131,7 @@ int main (int argc, char *argv[]){
         
     }
     t2 = getTime();
-    printf(" - time: %1.2lf sec\n",t2-t1);
+    printf(" - time: %1.4lf sec\n",t2-t1);
     fclose(fp_test);
     fclose(fw);
 
