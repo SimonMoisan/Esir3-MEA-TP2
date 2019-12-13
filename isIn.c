@@ -54,7 +54,7 @@ void Convertissor(const char * initial, unsigned char * result){
         }else if(initial[i+2] & masqueC){
             newChar = newChar | 0x01;
         }
-        
+
         if((((i + 1) % 4) == 0) && i != 0){
             result[(i / 4)] = newChar;
             newChar = 0;
@@ -136,7 +136,7 @@ int main (int argc, char *argv[]){
     fclose(fw);
 
     //We free the heap memory space used for the map
-    for (k = 0; k < kh_end(h); ++k)
+    for (k = 0; k <= kh_end(h); ++k)
         if (kh_exist(h, k))
             free((char*)kh_key(h, k));
     kh_destroy(str, h);
